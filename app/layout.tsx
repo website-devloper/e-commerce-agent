@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Syne, Plus_Jakarta_Sans } from "next/font/google";
+import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const syne = Syne({
+const space = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-syne",
+  variable: "--font-space",
   display: "swap",
-  weight: ["600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://zinabeauty.ma";
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${syne.variable} ${jakarta.variable}`} suppressHydrationWarning>
+    <html lang="fr" className={`${space.variable} ${jakarta.variable}`} suppressHydrationWarning>
       <head />
       <body className="min-h-screen antialiased" style={{ backgroundColor: "#FAF8F4" }}>
         {children}

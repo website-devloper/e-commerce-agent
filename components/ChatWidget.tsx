@@ -160,7 +160,7 @@ export default function ChatWidget() {
           <div className="absolute bottom-0 left-0 right-0 h-px opacity-30" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
           <div className="flex h-9 w-9 items-center justify-center rounded-full shrink-0 text-sm font-bold" style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #D4A84A 100%)`, color: DARK }}>Z</div>
           <div className="flex-1 min-w-0">
-            <h2 id={titleId} className="text-sm font-bold text-white leading-tight" style={{ fontFamily: "var(--font-syne)" }}>Zina Beauty</h2>
+            <h2 id={titleId} className="text-sm font-bold text-white leading-tight" style={{ fontFamily: "var(--font-space)" }}>Zina Beauty</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Your personal beauty advisor</p>

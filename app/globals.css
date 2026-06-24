@@ -9,7 +9,7 @@
   --color-muted:   #6B6580;
 
   --font-sans:    var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-syne),    ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space),   ui-sans-serif, system-ui, sans-serif;
 
   --shadow-card: 0 2px 16px 0 rgba(26, 16, 40, 0.07);
 }

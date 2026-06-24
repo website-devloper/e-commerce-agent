@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect, useId, useCallback } from "react";
-import { MessageCircle, X, Send, Loader2, Mic, MicOff } from "lucide-react";
+import { X, Send, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+interface Message { role: "user" | "assistant"; content: string; }
 
 const STORAGE_USER_ID = "zina_user_id";
+const DARK  = "#1A1028";
+const GOLD  = "#C4963A";
 
 function getOrCreateUserId(): string {
   try {
@@ -18,17 +17,7 @@ function getOrCreateUserId(): string {
     const id = uuidv4();
     localStorage.setItem(STORAGE_USER_ID, id);
     return id;
-  } catch {
-    return uuidv4();
-  }
-}
-
-// Dynamically built welcome so it renders on client after we know the user
-function buildWelcome(): Message {
-  return {
-    role: "assistant",
-    content: "Marhba! 🌹 Welcome to Zina Beauty. Tell me your skin type or what you're looking for and I'll find the perfect products for you — or ask me anything about our store.",
-  };
+  } catch { return uuidv4(); }
 }
 
 export default function ChatWidget() {
@@ -49,334 +38,198 @@ export default function ChatWidget() {
   const panelId = useId();
   const titleId = useId();
 
-  // Initialise userId + welcome message on mount (client-only)
   useEffect(() => {
-    const id = getOrCreateUserId();
-    setUserId(id);
-    setMessages([buildWelcome()]);
-
-    const SR =
-      typeof window !== "undefined"
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-        : null;
+    setUserId(getOrCreateUserId());
+    setMessages([{
+      role: "assistant",
+      content: "Marhba bik! 🌿 I'm your personal beauty advisor at Zina Beauty.\n\nTell me your skin type or what you're looking for — I'll find the perfect products for you instantly.",
+    }]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
     setVoiceSupported(!!SR);
   }, []);
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+  useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  // ── Voice input ─────────────────────────────────────────────────────────────
-
-  const sendMessageWithText = useCallback(
-    async (text: string) => {
-      if (!text.trim() || loading) return;
-      setInput("");
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
-      setLoading(true);
-
-      try {
-        const res = await fetch("/api/assistant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, userId, message: text }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Request failed");
-
-        setConversationId(data.conversationId);
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "Sorry, something went wrong. Please try again." },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [conversationId, userId, loading]
-  );
+  const sendMessageWithText = useCallback(async (text: string) => {
+    if (!text.trim() || loading) return;
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, userId, message: text }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Request failed");
+      setConversationId(data.conversationId);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, something went wrong. Please try again." }]);
+    } finally { setLoading(false); }
+  }, [conversationId, userId, loading]);
 
   function toggleVoice() {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
-
+    if (isListening) { recognitionRef.current?.stop(); setIsListening(false); return; }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
-
-    const recognition = new SR();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    // fr-MA is closest to Moroccan Darija for recognition — also captures French well
-    recognition.lang = "fr-MA";
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => setIsListening(true);
-
+    const r = new SR();
+    r.continuous = false; r.interimResults = true; r.lang = "fr-MA"; r.maxAlternatives = 1;
+    r.onstart = () => setIsListening(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results as SpeechRecognitionResultList)
-        .map((r) => r[0].transcript)
-        .join("");
-      lastTranscriptRef.current = transcript;
-      setInput(transcript);
+    r.onresult = (e: any) => {
+      const t = Array.from(e.results as SpeechRecognitionResultList).map((x) => x[0].transcript).join("");
+      lastTranscriptRef.current = t; setInput(t);
     };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      const text = lastTranscriptRef.current.trim();
-      lastTranscriptRef.current = "";
-      if (text) {
-        // Auto-send after voice finishes — the user spoke, they're ready
-        sendMessageWithText(text);
-        setInput("");
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      lastTranscriptRef.current = "";
-    };
-
-    recognition.start();
-    recognitionRef.current = recognition;
+    r.onend = () => { setIsListening(false); const t = lastTranscriptRef.current.trim(); lastTranscriptRef.current = ""; if (t) { sendMessageWithText(t); setInput(""); } };
+    r.onerror = () => { setIsListening(false); lastTranscriptRef.current = ""; };
+    r.start(); recognitionRef.current = r;
   }
 
-  // ── Text send ────────────────────────────────────────────────────────────────
-
-  async function sendMessage() {
-    await sendMessageWithText(input);
-  }
+  async function sendMessage() { await sendMessageWithText(input); }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const quickReplies = ["Oily skin routine", "Best argan oil", "Order tracking", "Return policy"];
 
   return (
     <>
-      {/* Floating bubble */}
+      {/* ── Float button ── */}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close chat" : "Open Zina Beauty assistant"}
         aria-expanded={open}
         aria-controls={panelId}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-200 ease-out hover:scale-110 active:scale-95"
-        style={{ backgroundColor: "#E5501E" }}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-200 hover:scale-110 active:scale-95"
+        style={{ background: `linear-gradient(135deg, ${DARK} 0%, #2E1A48 100%)` }}
       >
-        {open ? (
-          <X className="h-6 w-6 text-white" aria-hidden />
-        ) : (
-          <MessageCircle className="h-6 w-6 text-white" aria-hidden />
-        )}
-        {/* Pulse ring when closed */}
+        {open ? <X className="h-5 w-5 text-white" /> : <Sparkles className="h-5 w-5 text-white" />}
         {!open && (
-          <span
-            className="absolute inset-0 rounded-full animate-ping opacity-30"
-            style={{ backgroundColor: "#E5501E" }}
-          />
+          <span className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ backgroundColor: GOLD }} />
         )}
+        {/* Gold ring */}
+        <span className="absolute -inset-0.5 rounded-full opacity-40" style={{ border: `1.5px solid ${GOLD}` }} />
       </button>
 
-      {/* Chat panel */}
+      {/* ── Chat panel ── */}
       <div
-        id={panelId}
-        role="dialog"
-        aria-labelledby={titleId}
-        aria-hidden={!open}
+        id={panelId} role="dialog" aria-labelledby={titleId} aria-hidden={!open}
         className={[
-          "fixed bottom-24 right-6 z-50 flex w-[calc(100vw-3rem)] max-w-sm flex-col overflow-hidden rounded-2xl shadow-2xl",
-          "transition-all duration-240 ease-out",
-          open
-            ? "opacity-100 translate-y-0 pointer-events-auto scale-100"
-            : "opacity-0 translate-y-4 pointer-events-none scale-95",
+          "fixed bottom-24 right-6 z-50 flex flex-col overflow-hidden",
+          "w-[calc(100vw-3rem)] max-w-[380px]",
+          "transition-all duration-300 ease-out",
+          open ? "opacity-100 translate-y-0 pointer-events-auto scale-100" : "opacity-0 translate-y-5 pointer-events-none scale-95",
         ].join(" ")}
-        style={{ height: "min(600px, calc(100vh - 8rem))", backgroundColor: "#FBF8F2" }}
+        style={{ height: "min(620px, calc(100vh - 8rem))", borderRadius: "1.5rem", boxShadow: "0 24px 64px rgba(26,16,40,0.22), 0 0 0 1px rgba(26,16,40,0.08)", backgroundColor: "#FAF8F4" }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: "#E5501E" }}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white font-bold text-sm shrink-0">
-            Z
-          </div>
+        <div className="relative flex items-center gap-3 px-5 py-4 shrink-0" style={{ background: `linear-gradient(135deg, ${DARK} 0%, #2E1A48 100%)` }}>
+          {/* Gold accent line */}
+          <div className="absolute bottom-0 left-0 right-0 h-px opacity-30" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full shrink-0 text-sm font-bold" style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #D4A84A 100%)`, color: DARK }}>Z</div>
           <div className="flex-1 min-w-0">
-            <h2 id={titleId} className="text-sm font-bold text-white leading-tight">
-              Zina Beauty
-            </h2>
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-300" />
-              <p className="text-xs text-white/80">Online — replies instantly</p>
+            <h2 id={titleId} className="text-sm font-bold text-white leading-tight" style={{ fontFamily: "var(--font-playfair)" }}>Zina Beauty</h2>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Your personal beauty advisor</p>
             </div>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="Close chat"
-            className="rounded-full p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
-          >
-            <X className="h-4 w-4" aria-hidden />
+          <button onClick={() => setOpen(false)} aria-label="Close chat"
+            className="rounded-full p-1.5 transition-colors hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Messages */}
-        <div
-          className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-          aria-live="polite"
-          aria-label="Chat messages"
-        >
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" aria-live="polite">
           {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={["flex", msg.role === "user" ? "justify-end" : "justify-start"].join(" ")}
-            >
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-end gap-2`}>
               {msg.role === "assistant" && (
-                <div
-                  className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold"
-                  style={{ backgroundColor: "#E5501E" }}
-                >
-                  Z
-                </div>
+                <div className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold mb-0.5"
+                  style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #D4A84A 100%)`, color: DARK }}>Z</div>
               )}
-              <div
-                className={[
-                  "max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
-                  msg.role === "user"
-                    ? "rounded-br-sm text-white"
-                    : "rounded-bl-sm",
-                ].join(" ")}
-                style={
-                  msg.role === "user"
-                    ? { backgroundColor: "#E5501E", color: "#fff" }
-                    : { backgroundColor: "#EDE8DF", color: "#1B1714" }
-                }
-              >
+              <div className={["max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
+                msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm"].join(" ")}
+                style={msg.role === "user"
+                  ? { background: `linear-gradient(135deg, ${DARK} 0%, #2E1A48 100%)`, color: "#fff" }
+                  : { backgroundColor: "#FFFFFF", color: DARK, boxShadow: "0 2px 8px rgba(26,16,40,0.06)", border: "1px solid rgba(26,16,40,0.06)" }}>
                 {msg.content}
               </div>
             </div>
           ))}
 
-          {/* Typing indicator */}
           {loading && (
-            <div className="flex justify-start items-end gap-2">
-              <div
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold"
-                style={{ backgroundColor: "#E5501E" }}
-              >
-                Z
-              </div>
-              <div
-                className="flex items-center gap-1 rounded-2xl rounded-bl-sm px-4 py-3"
-                style={{ backgroundColor: "#EDE8DF" }}
-                aria-label="Assistant is typing"
-              >
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="block h-1.5 w-1.5 rounded-full bg-[#1B1714]/40 animate-bounce"
-                    style={{ animationDelay: `${i * 150}ms` }}
-                  />
+            <div className="flex items-end gap-2">
+              <div className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #D4A84A 100%)`, color: DARK }}>Z</div>
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-sm px-4 py-3"
+                style={{ backgroundColor: "#FFFFFF", boxShadow: "0 2px 8px rgba(26,16,40,0.06)", border: "1px solid rgba(26,16,40,0.06)" }}
+                aria-label="Typing…">
+                {[0,1,2].map((i) => (
+                  <span key={i} className="block h-1.5 w-1.5 rounded-full animate-bounce" style={{ backgroundColor: GOLD, animationDelay: `${i*150}ms` }} />
                 ))}
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Voice listening banner */}
-        {isListening && (
-          <div
-            className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: "#B5431A" }}
-          >
-            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-            Listening… speak now
-            <span className="h-2 w-2 rounded-full bg-white animate-pulse" style={{ animationDelay: "300ms" }} />
+        {/* Quick replies (only show with first welcome message) */}
+        {messages.length === 1 && !loading && (
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
+            {quickReplies.map((r) => (
+              <button key={r} onClick={() => sendMessageWithText(r)}
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all hover:scale-105 whitespace-nowrap"
+                style={{ backgroundColor: "#FFFFFF", color: DARK, border: `1px solid rgba(26,16,40,0.1)`, boxShadow: "0 1px 4px rgba(26,16,40,0.06)" }}>
+                {r}
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Input bar */}
-        <div
-          className="flex items-end gap-2 border-t px-3 py-3"
-          style={{ borderColor: "#E8E2D9" }}
-        >
-          <label htmlFor="chat-input" className="sr-only">Type a message</label>
-          <textarea
-            id="chat-input"
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isListening ? "Listening…" : "Type or speak a message…"}
-            rows={1}
-            disabled={loading || isListening}
-            className={[
-              "flex-1 resize-none rounded-xl border px-3 py-2 text-sm text-[#1B1714] placeholder-[#1B1714]/40",
-              "focus:outline-none focus:ring-2 focus:ring-[#E5501E]/40 focus:border-[#E5501E]",
-              "disabled:opacity-60 transition-colors max-h-28 leading-relaxed bg-white",
-            ].join(" ")}
-            style={{ borderColor: "#D6CFC5" }}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              el.style.height = "auto";
-              el.style.height = `${el.scrollHeight}px`;
-            }}
-          />
+        {/* Listening banner */}
+        {isListening && (
+          <div className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold"
+            style={{ backgroundColor: `${GOLD}15`, color: GOLD, borderTop: `1px solid ${GOLD}20` }}>
+            <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: GOLD }} />
+            Listening… speak now
+          </div>
+        )}
 
-          {/* Mic button — only shown when browser supports it */}
-          {voiceSupported && (
-            <button
-              onClick={toggleVoice}
-              disabled={loading}
-              aria-label={isListening ? "Stop listening" : "Start voice input"}
-              title={isListening ? "Stop" : "Speak"}
-              className={[
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-160",
-                "disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95",
-                isListening ? "text-white" : "text-white",
-              ].join(" ")}
-              style={{
-                backgroundColor: isListening ? "#B5431A" : "#D89B3F",
-              }}
-            >
-              {isListening ? (
-                <MicOff className="h-4 w-4" aria-hidden />
-              ) : (
-                <Mic className="h-4 w-4" aria-hidden />
-              )}
-            </button>
-          )}
-
-          {/* Send button */}
-          <button
-            onClick={sendMessage}
-            disabled={loading || !input.trim() || isListening}
-            aria-label="Send message"
-            className={[
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-160",
-              "disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95",
-            ].join(" ")}
-            style={{ backgroundColor: "#E5501E" }}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 text-white animate-spin" aria-hidden />
-            ) : (
-              <Send className="h-4 w-4 text-white" aria-hidden />
+        {/* Input area */}
+        <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "rgba(26,16,40,0.08)", backgroundColor: "#FFFFFF" }}>
+          <div className="flex items-end gap-2">
+            <label htmlFor="chat-input" className="sr-only">Type a message</label>
+            <textarea
+              id="chat-input" ref={inputRef} value={input}
+              onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+              placeholder={isListening ? "Listening…" : "Ask about products, skin type, orders…"}
+              rows={1} disabled={loading || isListening}
+              className="flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm disabled:opacity-60 transition-all focus:outline-none max-h-28 leading-relaxed"
+              style={{ borderColor: "rgba(26,16,40,0.12)", color: DARK, backgroundColor: "#FAF8F4", caretColor: GOLD }}
+              onFocus={(e) => (e.target.style.borderColor = GOLD)}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(26,16,40,0.12)")}
+              onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; }}
+            />
+            {voiceSupported && (
+              <button onClick={toggleVoice} disabled={loading} aria-label={isListening ? "Stop" : "Voice input"}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-40"
+                style={{ backgroundColor: isListening ? `${GOLD}25` : `${DARK}08`, color: isListening ? GOLD : DARK }}>
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
             )}
-          </button>
+            <button onClick={sendMessage} disabled={loading || !input.trim() || isListening}
+              aria-label="Send" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-40"
+              style={{ background: `linear-gradient(135deg, ${DARK} 0%, #2E1A48 100%)` }}>
+              {loading ? <Loader2 className="h-4 w-4 text-white animate-spin" /> : <Send className="h-4 w-4 text-white" />}
+            </button>
+          </div>
         </div>
       </div>
     </>

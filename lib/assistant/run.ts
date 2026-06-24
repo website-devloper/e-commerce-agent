@@ -8,10 +8,12 @@ import { defaultBusinessConfig } from "./defaultConfig";
 import { prisma } from "@/lib/db/prisma";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const model = process.env.ASSISTANT_MODEL ?? "meta-llama/llama-4-scout-17b-16e-instruct";
 
-const MAX_HISTORY_PAIRS = 20;
-const MAX_TOOL_ITERATIONS = 8;
+// llama-3.3-70b-versatile: best quality on Groq for Darija + tool use
+const model = process.env.ASSISTANT_MODEL ?? "llama-3.3-70b-versatile";
+
+const MAX_HISTORY_PAIRS   = 20;
+const MAX_TOOL_ITERATIONS = 5;
 
 async function getBusinessConfig(): Promise<BusinessConfig> {
   try {
@@ -68,6 +70,17 @@ async function saveHistory(
   });
 }
 
+// Parse tool arguments safely — return null if malformed
+function parseToolArgs(raw: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(raw || "{}");
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 export async function runAssistant(request: AssistantRequest): Promise<AssistantResponse> {
   const conversationId = request.conversationId ?? uuidv4();
   const channel = request.channel ?? "web";
@@ -95,31 +108,51 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       tools: getToolDefinitions(),
       tool_choice: "auto",
       max_tokens: 1024,
+      temperature: 0.4,
     });
 
     const choice = response.choices[0];
     const assistantMessage = choice.message;
     messages.push(assistantMessage as ChatCompletionMessageParam);
 
+    // No tool calls — we have the final text reply
     if (choice.finish_reason !== "tool_calls" || !assistantMessage.tool_calls?.length) {
-      const reply = assistantMessage.content ?? "I'm sorry, something went wrong. Please try again.";
-      const historyWithoutSystem = messages.slice(1);
-      await saveHistory(conversationId, historyWithoutSystem, needsHuman, channel);
+      const reply = assistantMessage.content?.trim() ?? "Maalik, chi 7aja machi mezyana. 3afak 3awd mera.";
+      await saveHistory(conversationId, messages.slice(1), needsHuman, channel);
       return { conversationId, reply };
     }
 
-    const toolResults = await Promise.all(
-      assistantMessage.tool_calls.map(async (tc) => {
-        const input = JSON.parse(tc.function.arguments ?? "{}");
-        if (tc.function.name === "handoff_to_human") needsHuman = true;
-        const output = await runTool(tc.function.name, input, config, conversationId, userId);
-        return { role: "tool" as const, tool_call_id: tc.id, content: output };
-      })
-    );
+    // Execute tool calls — with repair/retry on bad args
+    const toolResults: ChatCompletionMessageParam[] = [];
+
+    for (const tc of assistantMessage.tool_calls) {
+      const args = parseToolArgs(tc.function.arguments ?? "{}");
+
+      if (!args) {
+        // Bad args — inject a corrective message and break out of tool loop to retry
+        messages.push({
+          role: "tool" as const,
+          tool_call_id: tc.id,
+          content: `Error: could not parse arguments for ${tc.function.name}. Please call the tool again with valid JSON arguments.`,
+        });
+        continue;
+      }
+
+      if (tc.function.name === "handoff_to_human") needsHuman = true;
+
+      let output: string;
+      try {
+        output = await runTool(tc.function.name, args, config, conversationId, userId);
+      } catch (err) {
+        output = `Tool ${tc.function.name} failed: ${err instanceof Error ? err.message : "unknown error"}`;
+      }
+
+      toolResults.push({ role: "tool" as const, tool_call_id: tc.id, content: output });
+    }
 
     messages.push(...toolResults);
   }
 
   await saveHistory(conversationId, messages.slice(1), needsHuman, channel);
-  return { conversationId, reply: "I'm sorry, something went wrong. Please try again." };
+  return { conversationId, reply: "Maalik, chi 7aja machi mezyana. 3afak 3awd mera." };
 }

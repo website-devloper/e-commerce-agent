@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model BusinessConfig {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String
+  servicesJson String   // JSON: Product[]
+  hoursJson    String   // JSON: Record<string, string>
+  location     String
+  languages    String   // JSON: string[]
+  faqJson      String   // JSON: {q,a}[]
+  handoffEmail String
+  updatedAt    DateTime @updatedAt
+}
+
+model Lead {
+  id             Int      @id @default(autoincrement())
+  name           String
+  contact        String
+  interest       String
+  language       String?
+  source         String   @default("web")
+  status         String   @default("new")
+  conversationId String?
+  createdAt      DateTime @default(now())
+}
+
+model Order {
+  id             Int      @id @default(autoincrement())
+  orderRef       String   @unique
+  name           String
+  contact        String
+  product        String
+  address        String
+  paymentMethod  String   @default("cash_on_delivery")
+  status         String   @default("pending")
+  conversationId String?
+  createdAt      DateTime @default(now())
+}
+
+model Conversation {
+  id           String   @id @default(cuid())
+  channel      String   @default("web")
+  messagesJson String   @default("[]")
+  needsHuman   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  name      String?
+  skinType  String?
+  hairType  String?
+  concerns  String?
+  language  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

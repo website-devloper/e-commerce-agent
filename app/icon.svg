@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- background circle -->
+  <circle cx="16" cy="16" r="16" fill="#E5501E"/>
+  <!-- stylised "Z" letterform -->
+  <text x="16" y="22" font-family="Georgia, serif" font-size="20" font-weight="700"
+        fill="#F4EFE6" text-anchor="middle" dominant-baseline="auto">Z</text>
+  <!-- small gold dot accent -->
+  <circle cx="23" cy="9" r="3" fill="#D89B3F"/>
+</svg>

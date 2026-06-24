@@ -1,0 +1,43 @@
+{
+  "name": "replypilot",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@prisma/adapter-libsql": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.17",
+    "autoprefixer": "^10.5.0",
+    "better-sqlite3": "^12.11.1",
+    "groq-sdk": "^1.2.1",
+    "lucide-react": "^1.21.0",
+    "next": "^16.2.9",
+    "postcss": "^8.5.15",
+    "prisma": "^7.8.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "resend": "^6.14.0",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3",
+    "uuid": "^14.0.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9"
+  }
+}

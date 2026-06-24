@@ -42,7 +42,7 @@ export default function ChatWidget() {
     setUserId(getOrCreateUserId());
     setMessages([{
       role: "assistant",
-      content: "Marhba bik! 🌿 I'm your personal beauty advisor at Zina Beauty.\n\nTell me your skin type or what you're looking for — I'll find the perfect products for you instantly.",
+      content: "Wa3likom salam! 🌿 Ana Zina, l'conseillère ديالك فـ Zina Beauty.\n\nGoli liya shno 7al jeldek aw chno bghiti — w ghadi ndoulek 3la l'produit lli ynfa3ek!",
     }]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
@@ -96,7 +96,12 @@ export default function ChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  const quickReplies = ["Oily skin routine", "Best argan oil", "Order tracking", "Return policy"];
+  const quickReplies = [
+    "3andi jeld dehni 😕",
+    "Bghit ndir commande",
+    "Bch7al l'Argan Oil?",
+    "Routine lia!",
+  ];
 
   return (
     <>

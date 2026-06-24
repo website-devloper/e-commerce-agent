@@ -10,6 +10,32 @@ const STORAGE_USER_ID = "zina_user_id";
 const DARK  = "#1A1028";
 const GOLD  = "#C4963A";
 
+type Lang = "darija" | "ar" | "fr" | "en";
+
+function detectBrowserLang(): Lang {
+  try {
+    const l = (navigator.language ?? "en").toLowerCase();
+    if (l === "ar-ma")          return "darija";
+    if (l.startsWith("ar"))     return "ar";
+    if (l.startsWith("fr"))     return "fr";
+    return "en";
+  } catch { return "en"; }
+}
+
+const WELCOME: Record<Lang, string> = {
+  darija: "Wa3likom salam! 🌿 Ana Zina, l'conseillère ديالك fـ Zina Beauty.\n\nGoli liya shno 7al jeldek aw chno bghiti — w ghadi ndoulek 3la l'produit lli ynfa3ek!",
+  ar:     "مرحباً! 🌿 أنا زينة، مستشارتك في Zina Beauty.\n\nأخبريني عن نوع بشرتك أو ما تبحثين عنه — سأجد لك المنتجات المثالية!",
+  fr:     "Bienvenue! 🌿 Je suis Zina, votre conseillère beauté chez Zina Beauty.\n\nDites-moi votre type de peau ou ce que vous cherchez — je vous trouve les produits parfaits!",
+  en:     "Welcome! 🌿 I'm Zina, your personal beauty advisor at Zina Beauty.\n\nTell me your skin type or what you're looking for — I'll find the perfect products for you!",
+};
+
+const QUICK_REPLIES: Record<Lang, string[]> = {
+  darija: ["3andi jeld dehni 😕", "Bghit ndir commande", "Bch7al l'Argan Oil?", "Routine lia!"],
+  ar:     ["بشرة دهنية 😕", "أريد طلب منتج", "سعر زيت الأرغان؟", "روتين يومي"],
+  fr:     ["Peau grasse 😕", "Passer une commande", "Prix Argan Oil?", "Ma routine!"],
+  en:     ["Oily skin help 😕", "Place an order", "Argan Oil price?", "Build my routine"],
+};
+
 function getOrCreateUserId(): string {
   try {
     const stored = localStorage.getItem(STORAGE_USER_ID);
@@ -29,6 +55,7 @@ export default function ChatWidget() {
   const [userId, setUserId] = useState<string | undefined>();
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [lang, setLang] = useState<Lang>("en");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -40,10 +67,9 @@ export default function ChatWidget() {
 
   useEffect(() => {
     setUserId(getOrCreateUserId());
-    setMessages([{
-      role: "assistant",
-      content: "Wa3likom salam! 🌿 Ana Zina, l'conseillère ديالك فـ Zina Beauty.\n\nGoli liya shno 7al jeldek aw chno bghiti — w ghadi ndoulek 3la l'produit lli ynfa3ek!",
-    }]);
+    const detectedLang = detectBrowserLang();
+    setLang(detectedLang);
+    setMessages([{ role: "assistant", content: WELCOME[detectedLang] }]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
     setVoiceSupported(!!SR);
@@ -96,12 +122,7 @@ export default function ChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
-  const quickReplies = [
-    "3andi jeld dehni 😕",
-    "Bghit ndir commande",
-    "Bch7al l'Argan Oil?",
-    "Routine lia!",
-  ];
+  const quickReplies = QUICK_REPLIES[lang];
 
   return (
     <>

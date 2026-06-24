@@ -108,7 +108,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       tools: getToolDefinitions(),
       tool_choice: "auto",
       max_tokens: 1024,
-      temperature: 0.4,
+      temperature: 0.2,
     });
 
     const choice = response.choices[0];

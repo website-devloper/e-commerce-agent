@@ -42,9 +42,9 @@ export default function Home() {
             {/* Left */}
             <div>
               <p className="mb-4 text-sm font-medium" style={{ color: G }}>Free · No sign-up · Darija, French & English</p>
-              <h1 className="mb-6 text-5xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl"
-                style={{ fontFamily: "var(--font-syne)", color: D }}>
-                Your skin<br />deserves<br />better advice.
+              <h1 className="mb-6 leading-[1.05] tracking-tight"
+                style={{ fontFamily: "var(--font-jakarta)", color: D, fontSize: "clamp(3.5rem, 8vw, 5.5rem)", fontWeight: 800 }}>
+                Ask before<br />you buy.
               </h1>
               <p className="mb-8 text-lg leading-relaxed" style={{ color: "#6B6580", maxWidth: "420px" }}>
                 Tell Zina your skin type, concerns, and budget. She finds the right products from our Moroccan cosmetics catalogue — and takes your order in the chat.

@@ -41,13 +41,13 @@ export default function Home() {
 
             {/* Left */}
             <div>
-              <p className="mb-4 text-sm font-medium" style={{ color: G }}>Free · No sign-up · Replies in Darija</p>
+              <p className="mb-4 text-sm font-medium" style={{ color: G }}>Free · No sign-up · Darija, French & English</p>
               <h1 className="mb-6 text-5xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl"
                 style={{ fontFamily: "var(--font-syne)", color: D }}>
-                Ask before<br />you buy.
+                Your skin<br />deserves<br />better advice.
               </h1>
               <p className="mb-8 text-lg leading-relaxed" style={{ color: "#6B6580", maxWidth: "420px" }}>
-                Tell our assistant your skin type, what bothers you, your budget. It finds exactly what you need from our Moroccan cosmetics catalogue — then takes your order.
+                Tell Zina your skin type, concerns, and budget. She finds the right products from our Moroccan cosmetics catalogue — and takes your order in the chat.
               </p>
               <div className="flex flex-wrap gap-3">
                 <ScrollToDemoButton />
@@ -80,13 +80,13 @@ export default function Home() {
                       style={{ background: `linear-gradient(135deg, ${G}, #D4A84A)`, color: D }}>Z</div>
                     <div className="rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm max-w-[75%]"
                       style={{ backgroundColor: "#F4EFF8", color: D }}>
-                      Marhba! Describe your skin type and I&apos;ll find the right products for you.
+                      Hi! Tell me your skin type and I&apos;ll find the perfect products for you.
                     </div>
                   </div>
                   <div className="flex justify-end">
                     <div className="rounded-2xl rounded-br-sm px-3.5 py-2.5 text-sm text-white max-w-[75%]"
                       style={{ background: `linear-gradient(135deg, ${D}, #2E1A48)` }}>
-                      Jldi dial les taches noires, wesh kayn chi 7aja?
+                      I have oily skin with dark spots
                     </div>
                   </div>
                   <div className="flex gap-2 items-end">
@@ -94,7 +94,7 @@ export default function Home() {
                       style={{ background: `linear-gradient(135deg, ${G}, #D4A84A)`, color: D }}>Z</div>
                     <div className="rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm max-w-[80%]"
                       style={{ backgroundColor: "#F4EFF8", color: D }}>
-                      Iyeh! I recommend our <strong>Vitamin C Brightening Cream (245 MAD)</strong> — it targets dark spots in 4–6 weeks. Want me to add it to an order?
+                      For oily skin + dark spots: <strong>Vitamin C Cream (245 MAD)</strong> clears spots in 4–6 weeks. Want to order it?
                     </div>
                   </div>
                   <div className="flex justify-end">

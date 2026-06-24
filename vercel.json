@@ -3,19 +3,6 @@
   "buildCommand": "npx prisma generate && next build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "GROQ_API_KEY": "@groq_api_key",
-    "ASSISTANT_MODEL": "meta-llama/llama-4-scout-17b-16e-instruct",
-    "ADMIN_PASSWORD": "@admin_password",
-    "RESEND_API_KEY": "@resend_api_key",
-    "HANDOFF_EMAIL": "@handoff_email",
-    "NEXT_PUBLIC_BASE_URL": "@next_public_base_url",
-    "META_WHATSAPP_PHONE_NUMBER_ID": "@meta_whatsapp_phone_number_id",
-    "META_WHATSAPP_ACCESS_TOKEN": "@meta_whatsapp_access_token",
-    "META_WHATSAPP_VERIFY_TOKEN": "@meta_whatsapp_verify_token",
-    "META_APP_SECRET": "@meta_app_secret"
-  },
   "headers": [
     {
       "source": "/api/(.*)",

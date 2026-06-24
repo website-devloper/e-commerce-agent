@@ -31,7 +31,7 @@ export default function Home() {
           <a href="#products" className="hover:text-[#1A1028] transition-colors">Products</a>
           <a href="#demo" className="hover:text-[#1A1028] transition-colors">Try it</a>
         </div>
-        <a href="#demo" onClick={(e) => { e.preventDefault(); document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" }); }}
+        <a href="#demo"
           className="rounded-full px-5 py-2 text-sm font-semibold text-white transition-all hover:scale-105"
           style={{ background: `linear-gradient(135deg, ${G} 0%, #D4A84A 100%)` }}>
           Chat Now
